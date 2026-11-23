@@ -1,0 +1,72 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    color-scheme: light;
+    --ops-bg: #F8FAFC;
+    --ops-surface: #FFFFFF;
+    --ops-surface-elevated: #F1F5F9;
+    --ops-border: #E2E8F0;
+    --ops-text-primary: #0F172A;
+    --ops-text-secondary: #475569;
+    --ops-text-muted: #64748B;
+    --ops-brand: #0F294A;
+    --ops-primary: #2563EB;
+    font-family: 'Plus Jakarta Sans', 'IBM Plex Sans Arabic', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  .dark {
+    color-scheme: dark;
+    --ops-bg: #0B1120;
+    --ops-surface: #111827;
+    --ops-surface-elevated: #162033;
+    --ops-border: #1E293B;
+    --ops-text-primary: #F8FAFC;
+    --ops-text-secondary: #CBD5E1;
+    --ops-text-muted: #94A3B8;
+    --ops-brand: #E2E8F0;
+    --ops-primary: #3B82F6;
+  }
+
+  html[dir="rtl"] {
+    font-family: 'IBM Plex Sans Arabic', 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+
+  body {
+    background-color: var(--ops-bg);
+    color: var(--ops-text-primary);
+  }
+
+  .font-mono-num {
+    font-family: 'IBM Plex Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes opsgraph-trace-once {
+  from {
+    stroke-dasharray: 10 6;
+    stroke-dashoffset: 64;
+  }
+  to {
+    stroke-dasharray: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+.opsgraph-trace-path {
+  animation: opsgraph-trace-once 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

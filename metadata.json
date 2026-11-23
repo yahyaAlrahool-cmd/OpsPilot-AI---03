@@ -1,0 +1,8 @@
+{
+  "name": "OpsPilot AI",
+  "description": "Intelligent operations copilot for small businesses and service teams to monitor project execution, detect delivery risks, balance workload, and guide operational decisions.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

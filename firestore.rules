@@ -1,0 +1,510 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global safety net: deny all reads and writes by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // Global Hardened Primitives
+    // -------------------------------------------------------------------------
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isVerifiedOwner(userId) {
+      return isVerifiedUser() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isDateISO(val) {
+      return val is string && val.size() == 10 && val.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    function isValidServiceType(st) {
+      return st is string && st.size() <= 40 && st in [
+        'research_reports',
+        'presentations',
+        'graphic_design',
+        'website_development',
+        'business_services'
+      ];
+    }
+
+    function isValidStatus(st) {
+      return st is string && st.size() <= 32 && st in [
+        'new',
+        'in_progress',
+        'under_review',
+        'completed',
+        'on_hold'
+      ];
+    }
+
+    function isValidPriority(p) {
+      return p is string && p.size() <= 16 && p in [
+        'low',
+        'medium',
+        'high',
+        'critical'
+      ];
+    }
+
+    // -------------------------------------------------------------------------
+    // Entity Validation Blueprints (No existing() / diff() calls allowed here)
+    // -------------------------------------------------------------------------
+    function isValidWorkspace(data, userId) {
+      return data.keys().hasAll([
+          'ownerId',
+          'revision',
+          'legacyMigrated',
+          'seedOrigin',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'ownerId',
+          'revision',
+          'legacyMigrated',
+          'seedOrigin',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.revision is int
+        && data.revision >= 1
+        && data.legacyMigrated is bool
+        && data.seedOrigin is string
+        && data.seedOrigin.size() <= 32
+        && data.seedOrigin in ['seeded', 'migrated', 'reset']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidEmployee(data, userId, employeeId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'name',
+          'nameAr',
+          'role',
+          'roleAr',
+          'weeklyCapacityHours',
+          'skills',
+          'skillsVerified',
+          'version',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'name',
+          'nameAr',
+          'role',
+          'roleAr',
+          'weeklyCapacityHours',
+          'skills',
+          'skillsVerified',
+          'version',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id.size() <= 64
+        && data.id == employeeId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 160
+        && data.nameAr is string
+        && data.nameAr.size() >= 1
+        && data.nameAr.size() <= 160
+        && data.role is string
+        && data.role.size() >= 1
+        && data.role.size() <= 160
+        && data.roleAr is string
+        && data.roleAr.size() >= 1
+        && data.roleAr.size() <= 160
+        && (data.weeklyCapacityHours is int || data.weeklyCapacityHours is float)
+        && data.weeklyCapacityHours >= 1
+        && data.weeklyCapacityHours <= 168
+        && data.skills is list
+        && data.skills.size() <= 10
+        && data.skills.hasOnly([
+          'research_reports',
+          'presentations',
+          'graphic_design',
+          'website_development',
+          'business_services'
+        ])
+        && data.skillsVerified is bool
+        && data.version is int
+        && data.version >= 1
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidProject(data, userId, projectId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'clientName',
+          'clientNameAr',
+          'serviceType',
+          'title',
+          'titleAr',
+          'assignedEmployeeId',
+          'startDate',
+          'deadline',
+          'lastUpdated',
+          'status',
+          'progress',
+          'priority',
+          'estimatedWorkload',
+          'notes',
+          'notesAr',
+          'version',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'clientName',
+          'clientNameAr',
+          'serviceType',
+          'title',
+          'titleAr',
+          'assignedEmployeeId',
+          'startDate',
+          'deadline',
+          'completedDate',
+          'lastUpdated',
+          'status',
+          'progress',
+          'priority',
+          'estimatedWorkload',
+          'notes',
+          'notesAr',
+          'version',
+          'createdAt',
+          'updatedAt'
+        ])
+        && isValidId(data.id)
+        && data.id.size() <= 64
+        && data.id == projectId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.clientName is string
+        && data.clientName.size() >= 1
+        && data.clientName.size() <= 240
+        && data.clientNameAr is string
+        && data.clientNameAr.size() >= 1
+        && data.clientNameAr.size() <= 240
+        && isValidServiceType(data.serviceType)
+        && data.title is string
+        && data.title.size() >= 1
+        && data.title.size() <= 240
+        && data.titleAr is string
+        && data.titleAr.size() >= 1
+        && data.titleAr.size() <= 240
+        && isValidId(data.assignedEmployeeId)
+        && data.assignedEmployeeId.size() <= 64
+        && isDateISO(data.startDate)
+        && isDateISO(data.deadline)
+        && (!('completedDate' in data) || isDateISO(data.completedDate))
+        && isDateISO(data.lastUpdated)
+        && isValidStatus(data.status)
+        && (data.progress is int || data.progress is float)
+        && data.progress >= 0
+        && data.progress <= 100
+        && isValidPriority(data.priority)
+        && (data.estimatedWorkload is int || data.estimatedWorkload is float)
+        && data.estimatedWorkload >= 1
+        && data.estimatedWorkload <= 1000
+        && data.notes is string
+        && data.notes.size() <= 2000
+        && data.notesAr is string
+        && data.notesAr.size() <= 2000
+        && data.version is int
+        && data.version >= 1
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidAuditLog(data, userId, auditId) {
+      return data.keys().hasAll([
+          'id',
+          'ownerId',
+          'action',
+          'entityType',
+          'entityId',
+          'actorId',
+          'previousVersion',
+          'newVersion',
+          'changedFields',
+          'summary',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'ownerId',
+          'action',
+          'entityType',
+          'entityId',
+          'actorId',
+          'previousVersion',
+          'newVersion',
+          'changedFields',
+          'summary',
+          'createdAt'
+        ])
+        && isValidId(data.id)
+        && data.id == auditId
+        && data.ownerId is string
+        && data.ownerId.size() >= 1
+        && data.ownerId.size() <= 128
+        && data.ownerId == request.auth.uid
+        && data.ownerId == userId
+        && data.action is string
+        && data.action.size() <= 40
+        && data.action in [
+          'workspace_seeded',
+          'legacy_migrated',
+          'project_created',
+          'project_updated',
+          'project_reassigned',
+          'project_deleted',
+          'workspace_reset'
+        ]
+        && data.entityType is string
+        && data.entityType.size() <= 32
+        && data.entityType in ['workspace', 'project', 'employee']
+        && isValidId(data.entityId)
+        && data.actorId is string
+        && data.actorId.size() >= 1
+        && data.actorId.size() <= 128
+        && data.actorId == request.auth.uid
+        && data.previousVersion is int
+        && data.previousVersion >= 0
+        && data.newVersion is int
+        && data.newVersion >= 0
+        && data.changedFields is list
+        && data.changedFields.size() <= 25
+        && data.changedFields.hasOnly([
+          'clientName',
+          'clientNameAr',
+          'serviceType',
+          'title',
+          'titleAr',
+          'assignedEmployeeId',
+          'startDate',
+          'deadline',
+          'completedDate',
+          'lastUpdated',
+          'status',
+          'progress',
+          'priority',
+          'estimatedWorkload',
+          'notes',
+          'notesAr',
+          'seeded',
+          'migrated',
+          'deleted',
+          'reset'
+        ])
+        && data.summary is string
+        && data.summary.size() >= 1
+        && data.summary.size() <= 500
+        && data.createdAt is timestamp;
+    }
+
+    // -------------------------------------------------------------------------
+    // Collection Rules
+    // -------------------------------------------------------------------------
+    match /workspaces/{userId} {
+      allow get: if isValidId(userId) && isVerifiedOwner(userId);
+      allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+      allow create: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidWorkspace(incoming(), userId)
+        && incoming().revision == 1
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidId(userId)
+        && isVerifiedOwner(userId)
+        && isValidWorkspace(incoming(), userId)
+        && incoming().ownerId == existing().ownerId
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().revision == existing().revision + 1
+        && incoming().diff(existing()).affectedKeys().hasOnly([
+          'revision',
+          'legacyMigrated',
+          'seedOrigin',
+          'updatedAt'
+        ]);
+
+      allow delete: if false;
+
+      match /employees/{employeeId} {
+        allow get: if isValidId(userId)
+          && isValidId(employeeId)
+          && isVerifiedOwner(userId)
+          && get(/databases/$(database)/documents/workspaces/$(userId)).data.ownerId == request.auth.uid;
+
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(employeeId)
+          && isVerifiedOwner(userId)
+          && isValidEmployee(incoming(), userId, employeeId)
+          && incoming().version == 1
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId));
+
+        allow update: if isValidId(userId)
+          && isValidId(employeeId)
+          && isVerifiedOwner(userId)
+          && isValidEmployee(incoming(), userId, employeeId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().version == existing().version + 1
+          && incoming().diff(existing()).affectedKeys().hasOnly([
+            'name',
+            'nameAr',
+            'role',
+            'roleAr',
+            'weeklyCapacityHours',
+            'skills',
+            'skillsVerified',
+            'version',
+            'updatedAt'
+          ])
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId));
+
+        allow delete: if false;
+      }
+
+      match /projects/{projectId} {
+        allow get: if isValidId(userId)
+          && isValidId(projectId)
+          && isVerifiedOwner(userId)
+          && get(/databases/$(database)/documents/workspaces/$(userId)).data.ownerId == request.auth.uid;
+
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(projectId)
+          && isVerifiedOwner(userId)
+          && isValidProject(incoming(), userId, projectId)
+          && incoming().version == 1
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId))
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId)/employees/$(incoming().assignedEmployeeId));
+
+        allow update: if isValidId(userId)
+          && isValidId(projectId)
+          && isVerifiedOwner(userId)
+          && isValidProject(incoming(), userId, projectId)
+          && incoming().id == existing().id
+          && incoming().ownerId == existing().ownerId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && incoming().version == existing().version + 1
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId))
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId)/employees/$(incoming().assignedEmployeeId))
+          && (
+            // Action: Reassign project owner
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'assignedEmployeeId',
+              'lastUpdated',
+              'version',
+              'updatedAt'
+            ])
+            ||
+            // Action: Edit project fields / quick status / reset
+            incoming().diff(existing()).affectedKeys().hasOnly([
+              'clientName',
+              'clientNameAr',
+              'serviceType',
+              'title',
+              'titleAr',
+              'assignedEmployeeId',
+              'startDate',
+              'deadline',
+              'completedDate',
+              'lastUpdated',
+              'status',
+              'progress',
+              'priority',
+              'estimatedWorkload',
+              'notes',
+              'notesAr',
+              'version',
+              'updatedAt'
+            ])
+          );
+
+        allow delete: if isValidId(userId)
+          && isValidId(projectId)
+          && isVerifiedOwner(userId)
+          && get(/databases/$(database)/documents/workspaces/$(userId)).data.ownerId == request.auth.uid;
+      }
+
+      match /auditLogs/{auditId} {
+        allow get: if isValidId(userId)
+          && isValidId(auditId)
+          && isVerifiedOwner(userId)
+          && get(/databases/$(database)/documents/workspaces/$(userId)).data.ownerId == request.auth.uid;
+
+        allow list: if isVerifiedOwner(userId) && resource.data.ownerId == request.auth.uid;
+
+        allow create: if isValidId(userId)
+          && isValidId(auditId)
+          && isVerifiedOwner(userId)
+          && isValidAuditLog(incoming(), userId, auditId)
+          && incoming().createdAt == request.time
+          && existsAfter(/databases/$(database)/documents/workspaces/$(userId));
+
+        allow update, delete: if false;
+      }
+    }
+  }
+}

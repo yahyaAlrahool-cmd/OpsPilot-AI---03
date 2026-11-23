@@ -1,0 +1,399 @@
+{
+  "entities": {
+    "Workspace": {
+      "title": "Workspace",
+      "description": "Root operational workspace document tracking revision, migration state, and timestamps for an authenticated user.",
+      "type": "object",
+      "properties": {
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID owning this workspace.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "revision": {
+          "type": "integer",
+          "description": "Monotonically increasing workspace revision counter."
+        },
+        "legacyMigrated": {
+          "type": "boolean",
+          "description": "Whether one-time legacy localStorage migration check has completed."
+        },
+        "seedOrigin": {
+          "type": "string",
+          "description": "How the workspace was initialized or last reset.",
+          "enum": ["seeded", "migrated", "reset"],
+          "maxLength": 32
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        }
+      },
+      "required": [
+        "ownerId",
+        "revision",
+        "legacyMigrated",
+        "seedOrigin",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Employee": {
+      "title": "Employee",
+      "description": "Team member operational capacity and verified skill record.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Employee identifier (e.g., EMP-01).",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID owning the parent workspace.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Employee full name (English).",
+          "maxLength": 160,
+          "minLength": 1
+        },
+        "nameAr": {
+          "type": "string",
+          "description": "Employee full name (Arabic).",
+          "maxLength": 160,
+          "minLength": 1
+        },
+        "role": {
+          "type": "string",
+          "description": "Employee operational role (English).",
+          "maxLength": 160,
+          "minLength": 1
+        },
+        "roleAr": {
+          "type": "string",
+          "description": "Employee operational role (Arabic).",
+          "maxLength": 160,
+          "minLength": 1
+        },
+        "weeklyCapacityHours": {
+          "type": "number",
+          "description": "Weekly capacity hours (1 to 168)."
+        },
+        "skills": {
+          "type": "array",
+          "description": "List of service types supported by this employee."
+        },
+        "skillsVerified": {
+          "type": "boolean",
+          "description": "Whether skills have been verified by management."
+        },
+        "version": {
+          "type": "integer",
+          "description": "Optimistic concurrency revision number."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "name",
+        "nameAr",
+        "role",
+        "roleAr",
+        "weeklyCapacityHours",
+        "skills",
+        "skillsVerified",
+        "version",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "Project": {
+      "title": "Project",
+      "description": "Persisted operational client project order with version tracking and timestamps.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Project identifier (e.g., OP-1041).",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID owning the parent workspace.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client name (English).",
+          "maxLength": 240,
+          "minLength": 1
+        },
+        "clientNameAr": {
+          "type": "string",
+          "description": "Client name (Arabic).",
+          "maxLength": 240,
+          "minLength": 1
+        },
+        "serviceType": {
+          "type": "string",
+          "description": "Service line classification.",
+          "enum": [
+            "research_reports",
+            "presentations",
+            "graphic_design",
+            "website_development",
+            "business_services"
+          ]
+        },
+        "title": {
+          "type": "string",
+          "description": "Project title (English).",
+          "maxLength": 240,
+          "minLength": 1
+        },
+        "titleAr": {
+          "type": "string",
+          "description": "Project title (Arabic).",
+          "maxLength": 240,
+          "minLength": 1
+        },
+        "assignedEmployeeId": {
+          "type": "string",
+          "description": "Assigned employee ID.",
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "startDate": {
+          "type": "string",
+          "description": "ISO start date YYYY-MM-DD.",
+          "maxLength": 10,
+          "minLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "deadline": {
+          "type": "string",
+          "description": "ISO deadline date YYYY-MM-DD.",
+          "maxLength": 10,
+          "minLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "completedDate": {
+          "type": "string",
+          "description": "Optional ISO completion date YYYY-MM-DD.",
+          "maxLength": 10,
+          "minLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "lastUpdated": {
+          "type": "string",
+          "description": "ISO date of last operational update YYYY-MM-DD.",
+          "maxLength": 10,
+          "minLength": 10,
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+        },
+        "status": {
+          "type": "string",
+          "description": "Project execution status.",
+          "enum": ["new", "in_progress", "under_review", "completed", "on_hold"]
+        },
+        "progress": {
+          "type": "number",
+          "description": "Completion percentage 0 to 100."
+        },
+        "priority": {
+          "type": "string",
+          "description": "Operational priority level.",
+          "enum": ["low", "medium", "high", "critical"]
+        },
+        "estimatedWorkload": {
+          "type": "number",
+          "description": "Estimated workload hours (1 to 1000)."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Execution notes or recorded blockers (English).",
+          "maxLength": 2000
+        },
+        "notesAr": {
+          "type": "string",
+          "description": "Execution notes or recorded blockers (Arabic).",
+          "maxLength": 2000
+        },
+        "version": {
+          "type": "integer",
+          "description": "Optimistic concurrency revision number starting at 1."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server last-updated timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "clientName",
+        "clientNameAr",
+        "serviceType",
+        "title",
+        "titleAr",
+        "assignedEmployeeId",
+        "startDate",
+        "deadline",
+        "lastUpdated",
+        "status",
+        "progress",
+        "priority",
+        "estimatedWorkload",
+        "notes",
+        "notesAr",
+        "version",
+        "createdAt",
+        "updatedAt"
+      ]
+    },
+    "AuditLogEntry": {
+      "title": "AuditLogEntry",
+      "description": "Immutable operational audit trail entry recording workspace and project mutations.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Audit log entry ID.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "ownerId": {
+          "type": "string",
+          "description": "Authenticated Firebase UID owning the parent workspace.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "action": {
+          "type": "string",
+          "description": "Audit event action.",
+          "enum": [
+            "workspace_seeded",
+            "legacy_migrated",
+            "project_created",
+            "project_updated",
+            "project_reassigned",
+            "project_deleted",
+            "workspace_reset"
+          ],
+          "maxLength": 40
+        },
+        "entityType": {
+          "type": "string",
+          "description": "Affected entity type.",
+          "enum": ["workspace", "project", "employee"],
+          "maxLength": 32
+        },
+        "entityId": {
+          "type": "string",
+          "description": "Affected entity identifier.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "actorId": {
+          "type": "string",
+          "description": "Authenticated user UID performing the action.",
+          "maxLength": 128,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "previousVersion": {
+          "type": "integer",
+          "description": "Entity version prior to mutation (0 if created)."
+        },
+        "newVersion": {
+          "type": "integer",
+          "description": "Entity version after mutation (0 if deleted)."
+        },
+        "changedFields": {
+          "type": "array",
+          "description": "Allowlisted names of modified fields."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Human-readable audit summary.",
+          "maxLength": 500,
+          "minLength": 1
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server event timestamp."
+        }
+      },
+      "required": [
+        "id",
+        "ownerId",
+        "action",
+        "entityType",
+        "entityId",
+        "actorId",
+        "previousVersion",
+        "newVersion",
+        "changedFields",
+        "summary",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/workspaces/{userId}": {
+      "schema": { "$ref": "#/entities/Workspace" },
+      "description": "Workspace root metadata owned by verified userId."
+    },
+    "/workspaces/{userId}/employees/{employeeId}": {
+      "schema": { "$ref": "#/entities/Employee" },
+      "description": "Persisted team employee records scoped to the user workspace."
+    },
+    "/workspaces/{userId}/projects/{projectId}": {
+      "schema": { "$ref": "#/entities/Project" },
+      "description": "Persisted project orders with revision tracking and timestamps scoped to the user workspace."
+    },
+    "/workspaces/{userId}/auditLogs/{auditId}": {
+      "schema": { "$ref": "#/entities/AuditLogEntry" },
+      "description": "Append-only operational audit history scoped to the user workspace."
+    }
+  }
+}
